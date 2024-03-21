@@ -29,7 +29,7 @@ app.post('/monitor/register-server', (req, res) => {
 
 // en milisegundos
 const timeout = 50
-const resTime = 0
+let resTime = 0
 
 const checkServerStatus = async () => {
     serversList.forEach(async server => {
