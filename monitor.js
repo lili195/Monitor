@@ -27,14 +27,29 @@ app.post('/monitor/register-server', (req, res) => {
     res.sendStatus(200);
 });
 
+// en milisegundos
+const timeout = 50
+
 const checkServerStatus = async () => {
     serversList.forEach(async server => {
         console.log(`Iniciando chequeo para el servidor: ${server} ....`)
         try {
             const url = server + "/monitor/healthchek"
             console.log("Enviando peticiones a:" + url)
-            await axios.get(url)
-            console.log(`=== Servidor ${server} vivo ===`)
+
+            const start = Date.now();
+            const res = await axios.get(url)
+            if (res) {
+                const end = Date.now(); // Momento de recepción de la respuesta
+                const resTime = end - start;
+                console.log(`==============Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`)
+                if (resTime >= timeout) {
+                    serversList.splice(serversList.indexOf(server), 1);
+                    console.log(`Servidor ${server} eliminado por exceder el tiempo de respuesta.`);
+                } else {
+                    console.log(`=========Servidor ${server} vivo =========`)
+                }
+            }
         } catch (error) {
             serversList.splice(serversList.indexOf(server), 1);
             console.log(`La solicitud fue rechazada, servidor ${server} eliminado`);
@@ -43,8 +58,9 @@ const checkServerStatus = async () => {
     });
 };
 
-// Verificar el estado de los servidores cada 5 segundos
-setInterval(checkServerStatus, 10000)
+// Verificar el estado de los servidores cada 20 segundos
+setInterval(checkServerStatus, 15000)
+
 
 app.listen(port, () => {
     console.log(`Monitor escuchando en el puerto ${port}`)
