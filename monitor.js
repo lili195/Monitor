@@ -29,6 +29,7 @@ app.post('/monitor/register-server', (req, res) => {
 
 // en milisegundos
 const timeout = 50
+const resTime = 0
 
 const checkServerStatus = async () => {
     serversList.forEach(async server => {
@@ -41,7 +42,7 @@ const checkServerStatus = async () => {
             const res = await axios.get(url)
             if (res) {
                 const end = Date.now(); // Momento de recepción de la respuesta
-                const resTime = end - start;
+                resTime = end - start;
                 console.log(`==============Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`)
                 if (resTime >= timeout) {
                     serversList.splice(serversList.indexOf(server), 1);
