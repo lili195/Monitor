@@ -24,16 +24,16 @@ const io = new Server(server, {
     }
 });
 
-const port = process.env.PORT_MONITOR || 3001;
+const port = process.env.PORT_MONITOR;
 
-let serversList = []; // Lista para almacenar los servidores en formato deseado
+let serversList = [];
 
 app.post('/monitor/register-server', (req, res) => {
     const { ip, port } = req.body;
-    const serverUrl = `http://${ip}:${port}/cars`; // Construye la URL del servidor
-    serversList.push(serverUrl); // Agrega la URL a la lista de servidores
+    const serverUrl = `http://${ip}:${port}/cars`;
+    serversList.push(serverUrl);
     console.log('Servidor registrado:', serverUrl);
-    console.log('Lista de servidores:', serversList.join(', ')); // Mostrar la lista de servidores actualizada
+    console.log('Lista de servidores:', serversList.join(', '));
     res.sendStatus(200);
 });
 
@@ -56,7 +56,7 @@ const checkServerStatus = async () => {
                 console.log(`==============Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`);
                 if (resTime >= timeout) {
                     console.log(`Servidor ${server} eliminado por exceder el tiempo de respuesta.`);
-                    io.emit('server_deleted', { server, responseTime: resTime }); // Emitir evento de eliminación de servidor con tiempo de respuesta
+                    io.emit('server_deleted', { server, responseTime: resTime });
                 } else {
                     console.log(`=========Servidor ${server} vivo =========`);
                     updatedServersList.push({ server, responseTime: resTime });
@@ -65,25 +65,24 @@ const checkServerStatus = async () => {
         } catch (error) {
             console.log(`La solicitud fue rechazada, servidor ${server} eliminado`);
             console.log("Servidores restantes: ", serversList);
-            io.emit('server_deleted', { server, responseTime: null }); // Emitir evento de eliminación de servidor sin tiempo de respuesta
+            io.emit('server_deleted', { server, responseTime: null });
         }
     }
 
-    // Emitir la lista actualizada de servidores junto con los tiempos de respuesta
+
     io.emit('update_servers', { servers: updatedServersList });
 };
 
-// Verificar el estado de los servidores cada 20 segundos
-setInterval(checkServerStatus, 15000);
 
-// Manejar conexiones de Socket.IO
+setInterval(checkServerStatus, 3000);
+
+
 io.on('connection', socket => {
     console.log('Cliente conectado:', socket.id);
 
-    // Enviar la lista de servidores al cliente cuando se conecta
+
     socket.emit('servers_list', serversList);
 
-    // Manejar desconexiones de clientes
     socket.on('disconnect', () => {
         console.log('Cliente desconectado:', socket.id);
     });
