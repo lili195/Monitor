@@ -39,6 +39,7 @@ app.post('/monitor/register-server', (req, res) => {
 
 // en milisegundos
 const timeout = 50
+let resTime=0
 
 const checkServerStatus = async () => {
     const updatedServersList = [];
@@ -55,6 +56,7 @@ const checkServerStatus = async () => {
                 const resTime = end - start;
                 console.log(`==============Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`);
                 if (resTime >= timeout) {
+                    serversList.splice(serversList.indexOf(server),1);
                     console.log(`Servidor ${server} eliminado por exceder el tiempo de respuesta.`);
                     io.emit('server_deleted', { server, responseTime: resTime });
                 } else {
@@ -63,6 +65,7 @@ const checkServerStatus = async () => {
                 }
             }
         } catch (error) {
+            serversList.splice(serversList.indexOf(server),1);
             console.log(`La solicitud fue rechazada, servidor ${server} eliminado`);
             console.log("Servidores restantes: ", serversList);
             io.emit('server_deleted', { server, responseTime: null });
