@@ -5,6 +5,8 @@ const { Server } = require('socket.io');
 const express = require('express')
 const http = require('http');
 const cors = require('cors');
+const { spawn } = require('child_process');
+
 
 const app = express()
 const server = http.createServer(app);
@@ -38,8 +40,43 @@ app.post('/monitor/register-server', (req, res) => {
 });
 
 // en milisegundos
-const timeout = 50
+const timeout = 10
 let resTime=0
+
+// Función para detener el servidor
+const stopServer = (serverUrl) => {
+    serverUrl.close
+    console.log(`Deteniendo el servidor ${serverUrl}`);
+};
+
+// Función para lanzar una nueva instancia
+function launchNewInstance() {
+    console.log('Lanzando nueva instancia...');
+    try {
+        const scriptPath = 'newInstance.bat';
+        const batProcess = spawn('cmd', ['/c', scriptPath]);
+
+        // Captura y muestra la salida estándar del proceso
+        batProcess.stdout.on('data', (data) => {
+            console.log('Salida estándar:', data.toString());
+        });
+
+        // Captura y muestra la salida de error del proceso
+        batProcess.stderr.on('data', (data) => {
+            console.error('Proceso:', data.toString());
+        });
+
+        // Maneja los eventos de cierre del proceso
+        batProcess.on('close', (code) => {
+            console.log('Proceso de nueva instancia finalizado con código de salida', code);
+        });
+    } catch (error) {
+        console.error('Error al lanzar nueva instancia:', error);
+    }
+}
+
+
+
 
 const checkServerStatus = async () => {
     const updatedServersList = [];
@@ -58,6 +95,7 @@ const checkServerStatus = async () => {
                 if (resTime >= timeout) {
                     serversList.splice(serversList.indexOf(server),1);
                     console.log(`Servidor ${server} eliminado por exceder el tiempo de respuesta.`);
+                    launchNewInstance();
                     io.emit('server_deleted', { server, responseTime: resTime });
                 } else {
                     console.log(`=========Servidor ${server} vivo =========`);
