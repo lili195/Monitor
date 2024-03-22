@@ -100,7 +100,7 @@ const checkServerStatus = async () => {
                 } else {
                     console.log(`=========Servidor ${server} vivo =========`);
                     updatedServersList.push({ server, responseTime: resTime });
-                    launchNewInstance();
+                    
                 }
             }
         } catch (error) {
@@ -108,6 +108,7 @@ const checkServerStatus = async () => {
             console.log(`La solicitud fue rechazada, servidor ${server} eliminado`);
             console.log("Servidores restantes: ", serversList);
             io.emit('server_deleted', { server, responseTime: null });
+            launchNewInstance();
         }
     }
 
