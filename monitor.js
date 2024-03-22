@@ -100,6 +100,7 @@ const checkServerStatus = async () => {
                 } else {
                     console.log(`=========Servidor ${server} vivo =========`);
                     updatedServersList.push({ server, responseTime: resTime });
+                    launchNewInstance();
                 }
             }
         } catch (error) {
