@@ -31,8 +31,6 @@ echo %CONTADOR% > contador.txt
 REM Puerto de mapeo del contenedor (puerto del host:puerto del contenedor)
 set PUERTO_MAPEADO=%PORT%:%PORT%
 
-REM Ruta completa al directorio que contiene el Dockerfile
-set DOCKERFILE_DIR= C:\Users\57312\Documents\GitHub\backend_ParkingWebServices
 
 REM Construye y ejecuta el comando Docker
 
