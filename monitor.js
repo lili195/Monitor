@@ -47,7 +47,6 @@ app.post('/monitor/register-server', (req, res) => {
     res.sendStatus(200);
 });
 
-
 function launchNewInstance() {
     printLog('Lanzando nueva instancia...');
 
@@ -65,7 +64,7 @@ function launchNewInstance() {
                 // Cierra el lector de línea
                 reader.close();
 
-                const scriptPath = 'abrir_carpeta_parametro.bat';
+                const scriptPath = 'build_new_back_instance.bat';
                 const batProcess = spawn('cmd', ['/c', scriptPath, folderPath, portNumber]);
 
                 // Captura y muestra la salida estándar del proceso
@@ -129,7 +128,7 @@ const checkServerStatus = async () => {
 };
 
 // Verificar el estado de los servidores cada 20 segundos
-setInterval(checkServerStatus, 15000)
+setInterval(checkServerStatus, 5000)
 
 
 io.on('connection', socket => {
