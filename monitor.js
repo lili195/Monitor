@@ -83,12 +83,13 @@ function launchNewInstance() {
 
             // Captura y muestra la salida estándar del proceso
             batProcess.stdout.on('data', (data) => {
-                printLog("Salida estándar: " + data.toString());
+                printLog("[[ Sistema anfitrión dice ]]: " + data.toString());
             });
 
             // Captura y muestra la salida de error del proceso
             batProcess.stderr.on('data', (data) => {
                 console.error('Ocurrió un error:', data.toString());
+                printLog("Intentando de nuevo....")
                 launchNewInstance();
             });
 
@@ -99,6 +100,8 @@ function launchNewInstance() {
         })
     } catch (error) {
         console.error('Error al lanzar nueva instancia:', error);
+        printLog("Intentando de nuevo....")
+        launchNewInstance();
     }
 }
 
