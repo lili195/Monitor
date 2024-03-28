@@ -1,30 +1,10 @@
 @echo off
 
-rem Recibe la ruta de la carpeta como parámetro
-rem Si no se recibe un parámetro, muestra un mensaje de error
-if "%1"=="" (
-  echo Error: Debe especificar la ruta de la carpeta.
-  exit 1
-)
-
-rem Comprueba si la ruta existe
-if not exist "%1" (
-  echo Error: La ruta "%1" no existe.
-  exit 1
-)
-
-rem Cambia el directorio actual a la ruta especificada
-cd "%1"
-
-rem Muestra el contenido de la carpeta
-echo Carpeta "%1" encontrada, mostrando contenidos:
-dir
-
 rem **Recibe el número como parámetro**
 
-rem Si el segundo parámetro no es un número, se muestra un mensaje de error
+rem Si el segundo parámetro está vacío, se muestra un error
 
-set "port_number=%2"
+set "port_number=%1"
 
 if "%port_number%"=="" (
   echo Error: Debe ingresar un número como parámetro.
@@ -34,13 +14,32 @@ if "%port_number%"=="" (
 rem **Muestra el número recibido**
 echo Número recibido: %port_number%
 
-rem **Crear el nombre del contenedor**
+
+rem **Recibe la ip como parámetro**
+
+set "ip_addr=%2"
+
+if "%ip_addr%"=="" (
+  echo Error: Debe ingresar un número como parámetro.
+  exit 1
+)
+
+echo ip recibida: %ip_addr%
+rem Si el tercer parámetro está vacío, se muestra un error
+
+
+
+rem **Crear las variables necesarias**
 
 set "container_name=backend_%port_number%"
+set "db_url=postgres://postgres:1234@%ip_addr%:5432/postgres"
+set "balancer_url=http://%ip_addr%:3000"
+set "monitor_url=http://%ip_addr%:3001"
+
 
 rem **Construir el comando para ejecutar el contenedor"
 
-set "docker_run_command=docker run -d --name %container_name% -e PORT=%port_number% -e DATABASE_URL=postgres://postgres:1234@192.168.0.101:5432/postgres -e BALANCER_URL=http://192.168.0.101:3000 -e MONITOR_URL=http://192.168.0.101:3001 -e IP_ADDRESS=192.168.0.101 -p %port_number%:%port_number% backend"
+set "docker_run_command=docker run -d --name %container_name% -e PORT=%port_number% -e DATABASE_URL=%db_url% -e BALANCER_URL=%balancer_url% -e MONITOR_URL=%monitor_url% -e IP_ADDRESS=%ip_addr% -p %port_number%:%port_number% backend"
 
 rem **Mostrar el comando creado**
 

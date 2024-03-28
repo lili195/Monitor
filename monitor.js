@@ -47,42 +47,56 @@ app.post('/monitor/register-server', (req, res) => {
     res.sendStatus(200);
 });
 
+function isValidIP(ip) {
+    const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    if (!ipPattern.test(ip)) return false;
+
+    const parts = ip.split('.').map(Number);
+    return parts.every(part => part >= 0 && part <= 255);
+}
+
+let port_new_instance = 16000
+
 function launchNewInstance() {
+    console.log("               **********************************************************")
     printLog('Lanzando nueva instancia...');
 
     try {
-        const readline = require('readline');
-
         const reader = readline.createInterface({
             input: process.stdin,
             output: process.stdout
         });
 
-        reader.question('Introduzca la ruta de la carpeta donde esta el Dockerfile: ', (folderPath) => {
+        reader.question('Introduzca la direccion ip a donde se va a conectar el nuevo servicio: \n', (ip_address) => {
+            reader.close();
 
-            reader.question('Introduzca el número para el puerto de la nueva instancia: ', (portNumber) => {
-                // Cierra el lector de línea
-                reader.close();
+            if (!isValidIP(ip_address)) {
+                console.log('La dirección IP introducida no es válida. Por favor, introduzca una dirección IP válida.');
+                launchNewInstance(); // Vuelve a solicitar la dirección IP
+                return;
+            }
 
-                const scriptPath = 'build_new_back_instance.bat';
-                const batProcess = spawn('cmd', ['/c', scriptPath, folderPath, portNumber]);
+            const scriptPath = 'build_new_back_instance.bat';
+            const batProcess = spawn('cmd', ['/c', scriptPath, port_new_instance, ip_address]);
+            port_new_instance = ++port_new_instance;
+            console.log("NUEVO PUERTO:" + port_new_instance)
 
-                // Captura y muestra la salida estándar del proceso
-                batProcess.stdout.on('data', (data) => {
-                    printLog(data.toString());
-                });
-
-                // Captura y muestra la salida de error del proceso
-                batProcess.stderr.on('data', (data) => {
-                    console.error('Proceso:', data.toString());
-                });
-
-                // Maneja los eventos de cierre del proceso
-                batProcess.on('close', (code) => {
-                    printLog('Proceso de nueva instancia finalizado con código de salida', code);
-                });
+            // Captura y muestra la salida estándar del proceso
+            batProcess.stdout.on('data', (data) => {
+                printLog("Salida estándar: " + data.toString());
             });
-        });
+
+            // Captura y muestra la salida de error del proceso
+            batProcess.stderr.on('data', (data) => {
+                console.error('Ocurrió un error:', data.toString());
+                launchNewInstance();
+            });
+
+            // Maneja los eventos de cierre del proceso
+            batProcess.on('close', (code) => {
+                printLog('Proceso de nueva instancia finalizado con código de salida', code);
+            });
+        })
     } catch (error) {
         console.error('Error al lanzar nueva instancia:', error);
     }
@@ -105,21 +119,24 @@ const checkServerStatus = async () => {
             if (res) {
                 const end = Date.now(); // Momento de recepción de la respuesta
                 resTime = end - start;
-                printLog(`==============Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`)
+                printLog(`=>    Tiempo de respuesta del servidor en milisegundos ${server} es ${resTime}ms`)
                 if (resTime >= timeout) {
                     serversList.splice(serversList.indexOf(server), 1);
                     printLog(`Servidor ${server} eliminado por exceder el tiempo de respuesta.`);
+                    printLog("+++++++++++ Servidores restantes +++++++++++ \n")
+                    console.log(serversList)
                     launchNewInstance();
                     io.emit('server_deleted', { server, responseTime: resTime });
                 } else {
                     updatedServersList.push({ server, responseTime: resTime });
-                    printLog(`=========Servidor ${server} vivo =========`)
+                    printLog(`=========     Servidor ${server} vivo     =========`)
                 }
             }
         } catch (error) {
             serversList.splice(serversList.indexOf(server), 1);
             printLog(`La solicitud fue rechazada, servidor ${server} eliminado`);
-            printLog("Servidores restantes: " + serversList)
+            printLog("+++++++++++ Servidores restantes +++++++++++ \n")
+            console.log(serversList)
             io.emit('server_deleted', { server, responseTime: null });
             launchNewInstance();
         }
@@ -127,8 +144,8 @@ const checkServerStatus = async () => {
     io.emit('update_servers', { servers: updatedServersList })
 };
 
-// Verificar el estado de los servidores cada 20 segundos
-setInterval(checkServerStatus, 5000)
+// Verificar el estado de los servidores cada 10 segundos
+setInterval(checkServerStatus, 10000)
 
 
 io.on('connection', socket => {
