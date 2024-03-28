@@ -106,7 +106,7 @@ function launchNewInstance() {
 }
 
 // en milisegundos
-const timeout = 2000
+const timeout = 150
 let resTime = 0
 
 const checkServerStatus = async () => {
