@@ -6,7 +6,10 @@ const express = require('express')
 const http = require('http')
 const cors = require('cors')
 const { spawn } = require('child_process');
+const { exec } = require('child_process');
 const readline = require('readline')
+const { chaosMonkey } = require('./chaosMonkey');
+const { setTimeout } = require('timers');
 
 const app = express()
 
@@ -47,6 +50,7 @@ app.post('/monitor/register-server', (req, res) => {
     res.sendStatus(200);
 });
 
+
 function isValidIP(ip) {
     const ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
     if (!ipPattern.test(ip)) return false;
@@ -67,7 +71,7 @@ function launchNewInstance() {
             output: process.stdout
         });
 
-        reader.question('Introduzca la direccion ip a donde se va a conectar el nuevo servicio: \n', (ip_address) => {
+        reader.question('Introduzca la dirección IP a donde se va a conectar el nuevo servicio: \n', (ip_address) => {
             reader.close();
 
             if (!isValidIP(ip_address)) {
@@ -96,6 +100,11 @@ function launchNewInstance() {
             // Maneja los eventos de cierre del proceso
             batProcess.on('close', (code) => {
                 printLog('Proceso de nueva instancia finalizado con código de salida', code);
+                printLog('Esperando 20 segundos antes de iniciar nuevos chequeos de estado...');
+                setTimeout(() => {
+                    printLog('Iniciando nuevos chequeos de estado...');
+                    checkServerStatus();
+                }, 120000); // Esperar 2 minutos (120000 ms) antes de iniciar nuevos chequeos de estado
             });
         })
     } catch (error) {
@@ -104,6 +113,25 @@ function launchNewInstance() {
         launchNewInstance();
     }
 }
+
+
+
+const runChaosMonkey = async () => {
+    try {
+      const stoppedContainerId = await chaosMonkey();
+      if (stoppedContainerId) {
+        printLog(`Se detuvo el contenedor con el puerto: ${stoppedContainerId}`);
+      } else {
+        // Lógica en caso de error al detener el servidor
+        printLog('Error al detener el servidor.');
+      }
+    } catch (error) {
+      console.error('Error al ejecutar Chaos Monkey:', error.message);
+    }
+  
+    setTimeout(runChaosMonkey, 60000); 
+};
+
 
 // en milisegundos
 const timeout = 150
@@ -147,9 +175,10 @@ const checkServerStatus = async () => {
     io.emit('update_servers', { servers: updatedServersList })
 };
 
+
 // Verificar el estado de los servidores cada 10 segundos
 setInterval(checkServerStatus, 10000)
-
+setTimeout(runChaosMonkey, 60000);
 
 io.on('connection', socket => {
     printLog('Cliente conectado: ' + socket.id);
@@ -165,3 +194,4 @@ io.on('connection', socket => {
 server.listen(port, () => {
     printLog(`Monitor escuchando en el puerto ${port}`);
 });
+
