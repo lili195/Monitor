@@ -111,7 +111,7 @@ let resTime = 0
 
 const checkServerStatus = async () => {
     const updatedServersList = [];
-    serversList.forEach(async server => {
+    for (const server of serversList) {
         printLog(`Iniciando chequeo para el servidor: ${server} ....`)
         try {
             const url = server + "/monitor/healthchek"
@@ -143,7 +143,7 @@ const checkServerStatus = async () => {
             io.emit('server_deleted', { server, responseTime: null });
             launchNewInstance();
         }
-    });
+    }
     io.emit('update_servers', { servers: updatedServersList })
 };
 
